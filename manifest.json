@@ -1,0 +1,26 @@
+{
+  "manifest_version": 1,
+  "api_version": 20191,
+  "script_runtime": { "language": "Lua", "version": "5.3" },
+
+  "key": "AC63175F-749B-41C9-B153-74700E55FE9E",
+  "name": "helix-core-search-obliterate",
+  "namespace": "Perforce",
+  "version": "20.1",
+  "version_name": "20.1 beta",
+  "description": "This extension is invoked when p4 obliterate is called. This makes a curl request to helix-p4search obliterate endpoint.",
+
+  "compatible_products": [ "p4d" ],
+
+  "default_locale": "en",
+  "supported_locales": [ "en", "ja" ],
+
+  "developer": {
+    "name": "Perforce Software, Inc.",
+    "url": "https://www.perforce.com/"
+  },
+  "homepage_url": "https://www.perforce.com/products/helix-p4search",
+
+  "license": "example license name",
+  "license_body": "Copyright 2020, Perforce Software, Inc."
+}
