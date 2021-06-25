@@ -96,7 +96,8 @@ function purgeESDoc()
 
         if not ok then
             return "Purge request failed: Purge url: " .. url
-        else return "Called purge endpoint"
+        -- Return nothing as returning a string breaks p4java.
+        else return ""
         end
     end
     return "Purge endpoint not called."
