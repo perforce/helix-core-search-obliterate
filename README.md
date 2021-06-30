@@ -39,7 +39,9 @@ This will create an extension skeleton named `helix-core-search-obliterate.p4-ex
   
 (3) Install the Helix Server Extension.
 
-    p4 extension -y --install helix-core-search-obliterate.p4-extension
+    p4 extension -y --allow-unsigned --install helix-core-search-obliterate.p4-extension
+    
+You can skip the `--allow-unsigned` option if your server allows unsigned extensions.
      	
 (4) Configure the extension's global settings and specify the `X-Auth-Token` and `ExtP4USER` values.
 
