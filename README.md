@@ -108,7 +108,7 @@ Delete the extension's directory and extension from Helix Core Server.
     		"clientcwd" = "$clientcwd"
     		"client" = "$client"
     		"argsQuoted" = "$files"
-    	}
+    	} | ConvertTo-Json
     	$Parameters = @{
     		Method		= "POST"
     		Uri		= "http://p4search.mydomain.com:1601/api/v1/obliterate"
@@ -125,7 +125,7 @@ Delete the extension's directory and extension from Helix Core Server.
 
 (3) Edit the triggers table by running `p4 triggers` and add the following to the triggers table. Make sure you change the X-Auth-Token as per your configuration.
 
-    testTrigger2 command pre-user-obliterate "powershell.exe %//depot/triggers/helix-core-search-obliterate.ps1% 00000000-0000-0000-0000-000000000000 %argc% %args% %client% %clientcwd%"
+    helix-core-search-obliterate command pre-user-obliterate "powershell.exe %//depot/triggers/helix-core-search-obliterate.ps1% 00000000-0000-0000-0000-000000000000 %argc% %args% %client% %clientcwd%"
 
 Done! Now, Helix Core Search will delete documents from Elastic Search whenever a file is obliterated.
     
