@@ -55,7 +55,7 @@ function Command()
 end
 
 function purgeESDoc()
-    print("Going to purge ES doc: ")
+    print("Executing helix-core-search-obliterate extension... ")
 
     local xAuthToken = config["auth_token"]
     local p4searchUrl = config["p4search_url"]
@@ -69,13 +69,27 @@ function purgeESDoc()
     local client = Helix.Core.Server.GetVar( "client")
     local clientcwd = Helix.Core.Server.GetVar( "clientcwd")
 
-    -- Check for -y option then call the end point
-    local argsQuotedFinal, count = string.gsub(argsQuoted, "-y,", "", 1)
+    print("argsQuoted: " .. argsQuoted )
 
-    if (count == 1) then
+    -- Separate parameters and files within argsQuoted
+    local params, filesStr = getParamsAndFiles(argsQuoted)
 
+    -- Check for -y option if found call the end point
+    local dashy = false
+    for k,v in pairs(params) do
+        -- Important: %-(.-)y means find - followed by any number of letters then y
+        if string.find(v, "%-(.-)y") == 1
+        then
+            dashy = true;
+            print("Found -y")
+        end
+    end
+
+    if (dashy) then
+        print("Files extracted from argsQuoted: " .. filesStr)
+        
         local t = {
-            ["argsQuoted"] = argsQuotedFinal,
+            ["argsQuoted"] = filesStr,
             ["client"] = client,
             ["clientcwd"] = clientcwd
         }
@@ -90,17 +104,41 @@ function purgeESDoc()
             postfields = encoded_payload,
         }
 
-        print("Going to call curl...")
+        print("Going to call purge endpoint...")
         local ok, err = c:perform()
         c:close()
 
         if not ok then
             return "Purge request failed: Purge url: " .. url
         -- Return nothing as returning a string breaks p4java.
-        else return ""
+        else return "" 
         end
     end
     return "Purge endpoint not called."
 
 end
 
+function getParamsAndFiles(args)
+    local filesStr = ""
+    local params = {};
+
+    local skipNext = false
+    for w in string.gmatch(args, "[^,]*,?") do
+        w = trim(w)
+        if string.len(w) > 0
+        then
+            w = string.gsub(w, ",$", "")
+            if string.find(w, "-") == 1
+            then
+                -- Add to parameters array
+                table.insert(params, w)
+            else
+                -- This must be one of the actual path we want.
+                filesStr = filesStr .. w .. ","
+            end
+        end
+    end
+    -- Remove the last comma
+    filesStr = string.gsub(filesStr, ",$", "")
+    return params, filesStr
+end
