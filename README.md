@@ -10,7 +10,7 @@ This document describes the necessary steps to customize and install the extensi
 
 Extensions are not currently supported on Helix Core on Windows. As an alternative to extensions, you can configure a trigger to index changes.
 
-Here's an example- [Obliterate trigger on windows](#obliterate-trigger-on-windows)    
+Here's an example- [Obliterate trigger on Windows](#obliterate-trigger-on-windows)    
 
 ## Requirements
 
@@ -80,89 +80,11 @@ Delete the extension's directory and extension from Helix Core Server.
     p4 extension -y --delete Perforce::helix-core-search-obliterate
 
 
-## Obliterate trigger on windows
+## Obliterate trigger on Windows
 
-(1) Create a trigger script and save it in helix core. Make sure you change the Uri from `http://p4search.mydomain.com:1601` as per your configuration.
-
-    Add-Type -AssemblyName System.Web
-
-    # Function starts
-    function Get-ParamsFiles {
-        param (
-          $argsQuoted
-        )
+(1) Create a powershell script. For your convenience, here's an [example script](helix-core-search-obliterate.ps1).
+Make sure you change the Uri from `http://p4search.mydomain.com:1601` as per your configuration.
     
-        $fileStr = ""
-        $params = [System.Collections.ArrayList]::new()
-        
-        $words = $argsQuoted.Split(',')
-        foreach ($word in $words) {
-        $word = $word.Trim();
-    
-        # If word lenght > 0 check for '-' at the beginning if found store in params array if not found add to the fileStr
-        if ( $word.Length -gt 0 ) {
-          if ( $word  -like '-*' ) {
-            # Add to parameters array
-            [void]$params.Add($word)
-          } else {
-            # Append to fileStr
-            $fileStr = ( $fileStr , $word ) -join ","
-          }
-        }
-        }
-        # Remove first comma
-        $fileStr = $fileStr -replace "^,", ""
-        
-        return $params, $fileStr
-    }
-    # Function ends
-    
-    $token = $args[0]
-    $argsQuoted = $args[1]
-    
-    $decodedString = [System.Web.HttpUtility]::UrlDecode($argsQuoted)
-    Write-Host "Decoded argsQuoted: " $argsQuoted
-    
-    # Separate parameters and files within argsQuoted
-    $returnValue = Get-ParamsFiles $argsQuoted
-    $paramList = $returnValue[0]
-    $fileStr = $returnValue[1]
-    
-    # Check for -y option if found call the end point
-    $dashy = $false
-    foreach ($param in $paramList) {
-        # Important: '-*y' means find '-' followed by any number of letters then y
-        if ( $param -like '-*y' ) {
-            Write-Host "Found -y: " $param
-            $dashy = $true
-        }
-    }
-    If ($dashy) {
-    $client = $args[2]
-    $clientcwd = $args[3]
-
-	Write-Host "Going to call purge endpoint..."
-	
-	$Header = @{
-		"X-Auth-Token" = "$token"
-	}
-	$BodyJson = @{
-		"clientcwd" = "$clientcwd"
-		"client" = "$client"
-		"argsQuoted" = "$fileStr"
-	} | ConvertTo-Json
-	$Parameters = @{
-		Method		= "POST"
-		Uri			= "http://p4search.mydomain.com:1601/api/v1/obliterate"
-		Headers		= $Header
-		ContentType	= "application/json"
-		Body		= $BodyJson
-	}
-    	Invoke-RestMethod @Parameters
-    } Else {
-        Write-Host "-y not present. Not calling endpoint."
-    }
-
 (2) Save this file as helix-core-search-obliterate.ps1. Add this file to Helix Core preferably at //depot/triggers/....
 
 (3) Edit the triggers table by running `p4 triggers` and add the following to the triggers table. Make sure you change the X-Auth-Token as per your configuration.
@@ -170,4 +92,3 @@ Delete the extension's directory and extension from Helix Core Server.
     helix-core-search-obliterate command pre-user-obliterate "powershell.exe %//depot/triggers/helix-core-search-obliterate.ps1% 00000000-0000-0000-0000-000000000000 %argsQuoted% %client% %clientcwd%"
 
 Done! Now, Helix Core Search will delete documents from Elastic Search whenever a file is obliterated.
-    
