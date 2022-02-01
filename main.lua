@@ -50,7 +50,7 @@ function Command()
 	local p4 = P4.P4:new()
 	p4:autoconnect()
 	if not p4:connect() then
-	Helix.Core.Server.ReportError( Helix.Core.P4API.Severity.E_FAILED, "Error connecting to server\n" )
+		Helix.Core.Server.ReportError( Helix.Core.P4API.Severity.E_FAILED, "Error connecting to server\n" )
 		return false
 	end
 	local props = p4:run("property", "-l", "-nP4.P4Search.URL")
@@ -91,32 +91,42 @@ function purgeESDoc(p4searchUrl, xAuthToken)
 	end
 
 	if (dashy) then
-			local t = {
-				["argsQuoted"] = filesStr,
-				["client"] = client,
-				["clientcwd"] = clientcwd
-			}
-			local encoded_payload = cjson.encode(t)
-			print("encoded_payload: " .. encoded_payload)
-			local c = curl.easy{
-				url			= p4searchUrl,
-				post		 = true,
+		local t = {
+			["argsQuoted"] = filesStr,
+			["client"] = client,
+			["clientcwd"] = clientcwd
+		}
+		local encoded_payload = cjson.encode(t)
+		print("encoded_payload: " .. encoded_payload)
+		p4searchUrl = p4searchUrl .. "/api/v1/obliterate"
+		print("Going to call url: " .. p4searchUrl)
+
+		local c = curl.easy{
+			url			= p4searchUrl,
+			post		 = true,
 			httpheader = headers,
 			postfields = encoded_payload,
 		}
 
 		print("Going to call purge endpoint...")
-		local ok, err = c:perform()
+		local response = c:perform()
+		local code = c:getinfo(curl.INFO_RESPONSE_CODE)
 		c:close()
 
-		if not ok then
-			return "Purge request failed: Purge url: " .. url
-		-- Return nothing as returning a string breaks p4java.
-		else return ""
+		-- Unreachable server
+		if not response
+		then
+			print("Purge request returned error " .. tostring(code))
+			return "Unreachable server: " .. p4searchUrl
+		end
+
+		if code == 200 then
+			-- Return nothing as returning a string breaks p4java.
+			return ""
+		else
+			return "Purge request failed: Purge url: " .. p4searchUrl
 		end
 	end
-	return "Purge endpoint not called."
-
 end
 
 function getParamsAndFiles(args)
