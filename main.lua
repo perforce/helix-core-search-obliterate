@@ -32,6 +32,13 @@ function init()
 	end
 end
 
+-- Write a log message to the extension log, along with some user data.
+function log(msg)
+	local host = Helix.Core.Server.GetVar("clientip")
+	local user = Helix.Core.Server.GetVar("user")
+	Helix.Core.Server.log({ ["user"] = user, ["host"] = host, ["msg"] = msg })
+end
+
 function GlobalConfigFields()
 	return {}
 end
@@ -68,8 +75,8 @@ end
 function purgeESDoc(p4searchUrl, xAuthToken)
 	print("Executing helix-core-search-obliterate extension... ")
 	headers = {
-			"Accept: application/json",
-			"X-Auth-Token: " .. xAuthToken
+		"Accept: application/json",
+		"X-Auth-Token: " .. xAuthToken
 	}
 	local argsQuoted = Helix.Core.Server.GetVar( "argsQuoted")
 	local client = Helix.Core.Server.GetVar( "client")
@@ -82,12 +89,12 @@ function purgeESDoc(p4searchUrl, xAuthToken)
 	-- Check for -y option if found call the end point
 	local dashy = false
 	for k,v in pairs(params) do
-			-- Important: %-(.-)y means find - followed by any number of letters then y
-			if string.find(v, "%-(.-)y") == 1
-			then
-				dashy = true;
-				print("Found -y")
-			end
+		-- Important: %-(.-)y means find - followed by any number of letters then y
+		if string.find(v, "%-(.-)y") == 1
+		then
+			dashy = true;
+			print("Found -y")
+		end
 	end
 
 	if (dashy) then
@@ -116,16 +123,21 @@ function purgeESDoc(p4searchUrl, xAuthToken)
 		-- Unreachable server
 		if not response
 		then
-			print("Purge request returned error " .. tostring(code))
-			return "Unreachable server: " .. p4searchUrl
+			log("Server unreachable. Purge url: " .. p4searchUrl)
+			return ""
 		end
 
 		if code == 200 then
 			-- Return nothing as returning a string breaks p4java.
+			log("Purge request sent. Purge url: " .. p4searchUrl)
 			return ""
 		else
-			return "Purge request failed: Purge url: " .. p4searchUrl
+			log("Purge request failed. Status: " .. tostring(code) .. " Purge url: " .. p4searchUrl) 
+			return ""
 		end
+	else
+			log("Preview only")
+		return ""
 	end
 end
 
